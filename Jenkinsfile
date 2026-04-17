@@ -7,10 +7,7 @@ def runMaven(String goals, String extraArgs = '') {
 }
 
 def notifyTelegram(String status) {
-    if (!params.ENABLE_TELEGRAM_NOTIFY) {
-        echo 'Telegram notification is disabled.'
-        return
-    }
+
 
     String credentialId = params.TELEGRAM_BOT_TOKEN_CREDENTIAL_ID?.trim()
     String chatId = params.TELEGRAM_CHAT_ID?.trim()
