@@ -1,4 +1,8 @@
 pipeline {
+triggers {
+        pollSCM('* * * * *') // mỗi phút check
+    }
+
     agent any
 
     tools {
