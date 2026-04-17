@@ -68,6 +68,20 @@ pipeline {
     }
 
     post {
+    success {
+                    sh """
+                    curl -f -X POST https://api.telegram.org/bot<TOKEN>/sendMessage \
+                    -d chat_id=6123843580 \
+                    -d text="SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+                    """
+                }
+                failure {
+                    sh """
+                    curl -f -X POST https://api.telegram.org/bot<TOKEN>/sendMessage \
+                    -d chat_id=6123843580 \
+                    -d text="FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+                    """
+                }
         always {
             junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
             archiveArtifacts allowEmptyArchive: true, artifacts: 'target/surefire-reports/**'
@@ -75,19 +89,5 @@ pipeline {
         cleanup {
             deleteDir()
         }
-        success {
-                sh """
-                curl -f -X POST https://api.telegram.org/bot<TOKEN>/sendMessage \
-                -d chat_id=6123843580 \
-                -d text="SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
-                """
-            }
-            failure {
-                sh """
-                curl -f -X POST https://api.telegram.org/bot<TOKEN>/sendMessage \
-                -d chat_id=6123843580 \
-                -d text="FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
-                """
-            }
     }
 }
