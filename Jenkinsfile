@@ -1,18 +1,20 @@
 pipeline {
-triggers {
-        pollSCM('* * * * *') // mỗi phút check
-    }
-
     agent any
+
+    triggers {
+        pollSCM('H/5 * * * *')
+    }
 
     tools {
         maven 'Maven 3'
     }
 
     options {
+        timeout(time: 30, unit: 'MINUTES')
         timestamps()
         disableConcurrentBuilds()
-        buildDiscarder(logRotator(numToKeepStr: '20'))
+        skipStagesAfterUnstable()
+        buildDiscarder(logRotator(numToKeepStr: '20', artifactNumToKeepStr: '20'))
         skipDefaultCheckout(true)
     }
 
@@ -21,6 +23,11 @@ triggers {
             name: 'SELENIUM_GRID_URL',
             defaultValue: 'http://host.docker.internal:4444/wd/hub',
             description: 'Selenium Grid URL used by UI tests'
+        )
+        booleanParam(
+            name: 'RUN_TESTS',
+            defaultValue: true,
+            description: 'Run the Test stage'
         )
     }
 
@@ -42,6 +49,12 @@ triggers {
         }
 
         stage('Test') {
+            when {
+                expression { params.RUN_TESTS }
+            }
+            options {
+                retry(2)
+            }
             steps {
                 sh "mvn ${MAVEN_ARGS} test -Dselenium.grid.url=${params.SELENIUM_GRID_URL}"
             }
@@ -52,6 +65,9 @@ triggers {
         always {
             junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
             archiveArtifacts allowEmptyArchive: true, artifacts: 'target/surefire-reports/**'
+        }
+        cleanup {
+            deleteDir()
         }
     }
 }
