@@ -65,23 +65,6 @@ pipeline {
                 allure includeProperties: false, jdk: '', results: [[path: 'target/allure-resultss']]
             }
         }
-
-        post {
-            success {
-                sh """
-                curl -s -X POST https://api.telegram.org/bot<8688912458:AAGb3weBLWUCXoD5yamTpXiTz8PPbYwe-08>/sendMessage \
-                -d chat_id=<8688912458> \
-                -d text="✅ SUCCESS: ${env.JOB_NAME}"
-                """
-            }
-            failure {
-                sh """
-                curl -s -X POST https://api.telegram.org/bot<8688912458:AAGb3weBLWUCXoD5yamTpXiTz8PPbYwe-08>/sendMessage \
-                -d chat_id=<8688912458> \
-                -d text="❌ FAILED: ${env.JOB_NAME}"
-                """
-            }
-        }
     }
 
     post {
@@ -92,5 +75,19 @@ pipeline {
         cleanup {
             deleteDir()
         }
+        success {
+                        sh """
+                        curl -s -X POST https://api.telegram.org/bot<8688912458:AAGb3weBLWUCXoD5yamTpXiTz8PPbYwe-08>/sendMessage \
+                        -d chat_id=<8688912458> \
+                        -d text="✅ SUCCESS: ${env.JOB_NAME}"
+                        """
+                    }
+                    failure {
+                        sh """
+                        curl -s -X POST https://api.telegram.org/bot<8688912458:AAGb3weBLWUCXoD5yamTpXiTz8PPbYwe-08>/sendMessage \
+                        -d chat_id=<8688912458> \
+                        -d text="❌ FAILED: ${env.JOB_NAME}"
+                        """
+                    }
     }
 }
