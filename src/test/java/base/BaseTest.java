@@ -5,19 +5,33 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import utils.DriverFactory;
 
-public class BaseTest {
+public abstract class BaseTest {
 
     protected WebDriver driver;
 
-    @BeforeMethod
+    @BeforeMethod(alwaysRun = true)
     public void setUp() {
-        driver = DriverFactory.getDriver();
+        driver = createDriver();
     }
 
-    @AfterMethod
+    @AfterMethod(alwaysRun = true)
     public void tearDown() {
-        if (driver != null) {
-            driver.quit();
+        WebDriver currentDriver = driver;
+        driver = null;
+
+        if (currentDriver != null) {
+            currentDriver.quit();
         }
+    }
+
+    protected WebDriver createDriver() {
+        return DriverFactory.getDriver();
+    }
+
+    protected WebDriver driver() {
+        if (driver == null) {
+            throw new IllegalStateException("WebDriver is not initialized. Ensure setup has run.");
+        }
+        return driver;
     }
 }
