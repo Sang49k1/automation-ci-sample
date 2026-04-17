@@ -15,7 +15,7 @@ public class GoogleTest extends BaseTest {
 
         Assert.assertTrue(
                 driver().getTitle().contains(EXPECTED_TITLE_TEXT),
-                "Page title should contain expected text"
+                "Page title should contain expected text sangnt5"
         );
     }
 }
