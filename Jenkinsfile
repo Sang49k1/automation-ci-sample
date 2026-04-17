@@ -76,18 +76,18 @@ pipeline {
             deleteDir()
         }
         success {
-                        sh """
-                        curl -s -X POST https://api.telegram.org/bot8688912458:AAGb3weBLWUCXoD5yamTpXiTz8PPbYwe-08/sendMessage \
-                        -d chat_id=6123843580 \
-                        -d text="✅ SUCCESS: ${env.JOB_NAME}"
-                        """
-                    }
-                    failure {
-                        sh """
-                        curl -s -X POST https://api.telegram.org/bot8688912458:AAGb3weBLWUCXoD5yamTpXiTz8PPbYwe-08/sendMessage \
-                        -d chat_id=6123843580 \
-                        -d text="❌ FAILED: ${env.JOB_NAME}"
-                        """
-                    }
+                sh """
+                curl -f -X POST https://api.telegram.org/bot<TOKEN>/sendMessage \
+                -d chat_id=6123843580 \
+                -d text="SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+                """
+            }
+            failure {
+                sh """
+                curl -f -X POST https://api.telegram.org/bot<TOKEN>/sendMessage \
+                -d chat_id=6123843580 \
+                -d text="FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+                """
+            }
     }
 }
