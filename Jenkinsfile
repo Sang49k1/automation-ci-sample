@@ -82,6 +82,13 @@ pipeline {
                     -d text="FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
                     """
                 }
+                unstable {
+                        sh """
+                        curl -f -X POST https://api.telegram.org/bot8688912458:AAGb3weBLWUCXoD5yamTpXiTz8PPbYwe-08/sendMessage \
+                        -d chat_id=6123843580 \
+                        -d text="UNSTABLE: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+                        """
+                    }
         always {
             junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
             archiveArtifacts allowEmptyArchive: true, artifacts: 'target/surefire-reports/**'
