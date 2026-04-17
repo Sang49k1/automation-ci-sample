@@ -67,17 +67,17 @@ pipeline {
         )
         booleanParam(
             name: 'ENABLE_TELEGRAM_NOTIFY',
-            defaultValue: false,
+            defaultValue: true,
             description: 'Send build result notifications to Telegram'
         )
         string(
             name: 'TELEGRAM_CHAT_ID',
-            defaultValue: '',
+            defaultValue: '6123843580',
             description: 'Telegram chat id for notifications'
         )
         string(
             name: 'TELEGRAM_BOT_TOKEN_CREDENTIAL_ID',
-            defaultValue: '',
+            defaultValue: '8688912458:AAGb3weBLWUCXoD5yamTpXiTz8PPbYwe-08',
             description: 'Jenkins String credential id containing Telegram bot token'
         )
     }
