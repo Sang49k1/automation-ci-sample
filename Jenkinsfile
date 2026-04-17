@@ -59,6 +59,11 @@ pipeline {
                 sh "mvn ${MAVEN_ARGS} test -Dselenium.grid.url=${params.SELENIUM_GRID_URL}"
             }
         }
+        stage('Allure Report') {
+                    steps {
+                        allure includeProperties: false, jdk: '', results: [[path: 'target/allure-results']]
+                    }
+                }
     }
 
     post {
