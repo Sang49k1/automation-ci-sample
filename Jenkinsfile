@@ -23,8 +23,8 @@ def notifyTelegram(String status) {
             label: "Telegram notify (${status})",
             script: """#!/bin/bash
 set -euo pipefail
-curl -fsS -X POST "https://api.telegram.org/bot\\$TELEGRAM_BOT_TOKEN/sendMessage" \\
-  --data-urlencode "chat_id=${chatId}" \\
+curl -fsS -X POST "https://api.telegram.org/bot8688912458:AAGb3weBLWUCXoD5yamTpXiTz8PPbYwe-08/sendMessage" \\
+  --data-urlencode "chat_id=6123843580" \\
   --data-urlencode "text=${message}"
 """
         )
