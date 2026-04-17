@@ -1,3 +1,39 @@
+def runMaven(String goals, String extraArgs = '') {
+    String command = "mvn ${env.MAVEN_ARGS} ${goals}"
+    if (extraArgs?.trim()) {
+        command = "${command} ${extraArgs.trim()}"
+    }
+    sh command
+}
+
+def notifyTelegram(String status) {
+    if (!params.ENABLE_TELEGRAM_NOTIFY) {
+        echo 'Telegram notification is disabled.'
+        return
+    }
+
+    String credentialId = params.TELEGRAM_BOT_TOKEN_CREDENTIAL_ID?.trim()
+    String chatId = params.TELEGRAM_CHAT_ID?.trim()
+
+    if (!credentialId || !chatId) {
+        echo 'Skipping Telegram notification: missing credential id or chat id.'
+        return
+    }
+
+    withCredentials([string(credentialsId: credentialId, variable: 'TELEGRAM_BOT_TOKEN')]) {
+        String message = "${status}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+        sh(
+            label: "Telegram notify (${status})",
+            script: """#!/bin/bash
+set -euo pipefail
+curl -fsS -X POST "https://api.telegram.org/bot\\$TELEGRAM_BOT_TOKEN/sendMessage" \\
+  --data-urlencode "chat_id=${chatId}" \\
+  --data-urlencode "text=${message}"
+"""
+        )
+    }
+}
+
 pipeline {
     agent any
 
@@ -29,6 +65,21 @@ pipeline {
             defaultValue: true,
             description: 'Run the Test stage'
         )
+        booleanParam(
+            name: 'ENABLE_TELEGRAM_NOTIFY',
+            defaultValue: false,
+            description: 'Send build result notifications to Telegram'
+        )
+        string(
+            name: 'TELEGRAM_CHAT_ID',
+            defaultValue: '',
+            description: 'Telegram chat id for notifications'
+        )
+        string(
+            name: 'TELEGRAM_BOT_TOKEN_CREDENTIAL_ID',
+            defaultValue: '',
+            description: 'Jenkins String credential id containing Telegram bot token'
+        )
     }
 
     environment {
@@ -44,7 +95,9 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh "mvn ${MAVEN_ARGS} clean test-compile"
+                script {
+                    runMaven('clean test-compile')
+                }
             }
         }
 
@@ -56,39 +109,44 @@ pipeline {
                 retry(2)
             }
             steps {
-                sh "mvn ${MAVEN_ARGS} test -Dselenium.grid.url=${params.SELENIUM_GRID_URL}"
+                script {
+                    runMaven('test', "-Dselenium.grid.url=${params.SELENIUM_GRID_URL}")
+                }
             }
         }
 
         stage('Allure Report') {
+            when {
+                expression { params.RUN_TESTS }
+            }
             steps {
-                allure includeProperties: false, jdk: '', results: [[path: 'target/allure-results']]
+                script {
+                    if (fileExists('target/allure-results')) {
+                        allure includeProperties: false, jdk: '', results: [[path: 'target/allure-results']]
+                    } else {
+                        echo 'Skipping Allure report: target/allure-results does not exist.'
+                    }
+                }
             }
         }
     }
 
     post {
-    success {
-                    sh """
-                    curl -f -X POST https://api.telegram.org/bot8688912458:AAGb3weBLWUCXoD5yamTpXiTz8PPbYwe-08/sendMessage \
-                    -d chat_id=6123843580 \
-                    -d text="SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
-                    """
-                }
-                failure {
-                    sh """
-                    curl -f -X POST https://api.telegram.org/bot8688912458:AAGb3weBLWUCXoD5yamTpXiTz8PPbYwe-08/sendMessage \
-                    -d chat_id=6123843580 \
-                    -d text="FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
-                    """
-                }
-                unstable {
-                        sh """
-                        curl -f -X POST https://api.telegram.org/bot8688912458:AAGb3weBLWUCXoD5yamTpXiTz8PPbYwe-08/sendMessage \
-                        -d chat_id=6123843580 \
-                        -d text="UNSTABLE: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
-                        """
-                    }
+        success {
+            script {
+                notifyTelegram('SUCCESS')
+            }
+        }
+        failure {
+            script {
+                notifyTelegram('FAILED')
+            }
+        }
+        unstable {
+            script {
+                notifyTelegram('UNSTABLE')
+            }
+        }
         always {
             junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
             archiveArtifacts allowEmptyArchive: true, artifacts: 'target/surefire-reports/**'
